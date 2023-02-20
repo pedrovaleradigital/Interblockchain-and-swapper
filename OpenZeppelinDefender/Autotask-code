@@ -1,0 +1,24 @@
+const { ethers } = require("ethers");
+const {
+    DefenderRelaySigner,
+    DefenderRelayProvider,
+} = require("defender-relay-client/lib/ethers");
+
+exports.handler = async function(credentials) {
+  var nftAddress = "0x774D1dBc46F9040aB9950337Fd6Bd49138cD5EF0";
+  var provider = new DefenderRelayProvider(credentials);
+  var signer = new DefenderRelaySigner(credentials, provider, { speed: "fast" });
+
+  var abi = ["function safeMint(address to, uint256 id)"]
+  const contractNFT = new ethers.Contract(nftAddress, abi, signer);
+  
+  var onlyEvents = credentials.request.body.events[0].matchReasons.filter((e) => e.type === "event");
+  var purchaser = onlyEvents[0].args[0];
+  var tokenID = onlyEvents[0].args[1];
+  console.log("Comprador", purchaser);
+  console.log("tokenID", tokenID);
+
+  var tx = await contractNFT.connect(signer).safeMint(purchaser,tokenID);
+
+  return await tx.wait();
+}

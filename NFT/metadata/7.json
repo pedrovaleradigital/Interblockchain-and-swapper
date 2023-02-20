@@ -1,0 +1,24 @@
+{
+  "name": "PC2 PEDRO VALERA NFT  #2",
+  "description": "Fidelity NFT colllection, created as Loyalty Program Solution, with Superpowered NFT and expiration Token",
+  "image": "ipfs://QmTEzgxRy4tQ1UUgWrDFNcmrd6ajQ7BJnznSn1b3PWSQuw/7.png",
+  "edition": 7,
+  "attributes": [
+    {
+      "trait_type": "prize",
+      "value": "sunglasses"
+    },
+    {
+      "trait_type": "style",
+      "value": "van gogh style"
+    },
+    {
+      "trait_type": "platform",
+      "value": "dall-e-2"
+    },
+    {
+      "trait_type": "magic words",
+      "value": "A beautiful blonde woman wearing sunglasses in a sunny day, Van Gogh style"
+    }
+  ]
+}

@@ -27,7 +27,7 @@ contract MiPrimerNft is
     constructor() initializer {}
 
     function initialize() public initializer {
-        __ERC721_init("Mi Primer NFT", "MPRNFT");
+        __ERC721_init("PC2 PEDRO VALERA NFT", "MPRNFT");
         __Pausable_init();
         __Ownable_init();
         __UUPSUpgradeable_init();
@@ -40,7 +40,8 @@ contract MiPrimerNft is
     }
 
     function _baseURI() internal pure override returns (string memory) {
-        return "ipfs://QmVZkuCVeMStEYnYj1vFYDEdggwoQ2evHFn7wmj97RMUmf";
+        string memory ipfsCID = "QmPDEDNuk4SMhufMxkoCiYgWgoN959FC8X7S9CC4ucdeuk";
+        return string(abi.encodePacked("ipfs://", ipfsCID, "/"));
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {
@@ -103,6 +104,9 @@ contract MiPrimerNft is
 
 /*
 
+MiPrimerNft Proxy Address: 0x774D1dBc46F9040aB9950337Fd6Bd49138cD5EF0
+MiPrimerNft Impl Address: 0x051d694664479A20cFF90C77b45719a5F933a25e
 
+https://mumbai.polygonscan.com/address/0x774D1dBc46F9040aB9950337Fd6Bd49138cD5EF0
 
 */

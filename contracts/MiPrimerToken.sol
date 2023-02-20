@@ -42,4 +42,6 @@ contract MyTokenMiPrimerToken is
 /*
 MyTokenMiPrimerToken Proxy Address: 0x6D2304968662A48977Cca0A6b9af72f661d6D6eD
 MyTokenMiPrimerToken Impl Address: 0x6915966dFECFFe675D9feBC1D3FC3c0366b91bd3
+
+https://goerli.etherscan.io/address/0x6D2304968662A48977Cca0A6b9af72f661d6D6eD
 */

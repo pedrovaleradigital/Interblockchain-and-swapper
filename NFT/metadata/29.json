@@ -1,0 +1,24 @@
+{
+  "name": "PC2 PEDRO VALERA NFT  #2",
+  "description": "Fidelity NFT colllection, created as Loyalty Program Solution, with Superpowered NFT and expiration Token",
+  "image": "ipfs://QmTEzgxRy4tQ1UUgWrDFNcmrd6ajQ7BJnznSn1b3PWSQuw/29.png",
+  "edition": 29,
+  "attributes": [
+    {
+      "trait_type": "prize",
+      "value": "playstation"
+    },
+    {
+      "trait_type": "style",
+      "value": "oil painting my matisse"
+    },
+    {
+      "trait_type": "platform",
+      "value": "dall-e-2"
+    },
+    {
+      "trait_type": "magic words",
+      "value": "an oil painting by Matisse of a kid playinf with playstation"
+    }
+  ]
+}

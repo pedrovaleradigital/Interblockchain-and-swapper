@@ -1,0 +1,24 @@
+{
+  "name": "PC2 PEDRO VALERA NFT  #2",
+  "description": "Fidelity NFT colllection, created as Loyalty Program Solution, with Superpowered NFT and expiration Token",
+  "image": "ipfs://QmTEzgxRy4tQ1UUgWrDFNcmrd6ajQ7BJnznSn1b3PWSQuw/23.png",
+  "edition": 23,
+  "attributes": [
+    {
+      "trait_type": "prize",
+      "value": "hamburger and french fries"
+    },
+    {
+      "trait_type": "style",
+      "value": "stained glass window"
+    },
+    {
+      "trait_type": "platform",
+      "value": "dall-e-2"
+    },
+    {
+      "trait_type": "magic words",
+      "value": "A stained glass window of a hamburger and french fries"
+    }
+  ]
+}

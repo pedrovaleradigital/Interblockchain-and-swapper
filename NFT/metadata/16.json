@@ -1,0 +1,24 @@
+{
+  "name": "PC2 PEDRO VALERA NFT  #2",
+  "description": "Fidelity NFT colllection, created as Loyalty Program Solution, with Superpowered NFT and expiration Token",
+  "image": "ipfs://QmTEzgxRy4tQ1UUgWrDFNcmrd6ajQ7BJnznSn1b3PWSQuw/16.png",
+  "edition": 16,
+  "attributes": [
+    {
+      "trait_type": "prize",
+      "value": "macbook pro"
+    },
+    {
+      "trait_type": "style",
+      "value": "impressionist oil painting"
+    },
+    {
+      "trait_type": "platform",
+      "value": "dall-e-2"
+    },
+    {
+      "trait_type": "magic words",
+      "value": "An Impresionist Oil Painting of hands on a Macbook Pro, outdoors"
+    }
+  ]
+}

@@ -41,16 +41,16 @@ async function verifyUSDC(){
 async function setupPublicSale() {
 
   console.log("Conectandonos a PublicSale");
-  var publicSaleProxyAdd = "0x9C463fDd2677E4f1d90bd0e6212bfde94525F43d";
+  var publicSaleProxyAdd = "0x32B1A98029d8527f76ee0b91F81740d2E0019E0d";
   var gnosisSafeWalletAdd = "0x895369cd1d60c131669b2f800aDbbD129589ADD3";
-  var usdCoinAdd = "0xE4e5b4F5fA2B52F7E496cF263fE0E8A8C58b857B";  
+  var usdCoinAdd = "0x557AA53161e6168C57aBF64ED60Af7BE5fd07676";  
   var miPrimerTokenAdd = "0x6D2304968662A48977Cca0A6b9af72f661d6D6eD";
 
   var [owner] = await hre.ethers.getSigners();
   var urlProvider = process.env.GOERLI_TESNET_URL;
   var provider = new ethers.providers.JsonRpcProvider(urlProvider);
 
-  var publicSaleContract = new hre.ethers.Contract(publicSaleProxyAdd, publicSaleAbi.abi, provider);
+  var publicSaleContract = new hre.ethers.Contract(publicSaleProxyAdd, PublicSaleAbi.abi, provider);
 
   console.log("Configura el address de MiPrimerToken en Public Sale");
   var tx = await publicSaleContract.connect(owner).setMiPrimerToken(miPrimerTokenAdd);
@@ -77,6 +77,7 @@ async function deployMyTokenMiPrimerToken() {
 
 
 async function deployMumbai() {
+  //Todos los métodos de este contrato son protegidos. La única address con el privilegio de poder llamar métodos del contrato NFT es el Relayer de Open Zeppelin
   var relayerAddress = "0x53f867faa862ac3a85ee04fcb47243552658aac7";
   var nftContract = await deploySC("MiPrimerNft", []);
   var implementation = await printAddress("MiPrimerNft", nftContract.address);
@@ -90,6 +91,7 @@ async function deployMumbai() {
 async function deployGoerli() {
   await deployUSDC();
   await deployMyTokenMiPrimerToken();
+  await deployPublicSaleSC();
   await setupPublicSale();
 
 }
@@ -122,6 +124,33 @@ async function upgradePublicSaleSC() {
 
   console.log("Proxy address publicSaleUpgrade:", publicSaleUpgrade.address);
   console.log("Implementation address publicSaleUpgrade:", implmntAddress);
+
+  await hre.run("verify:verify", {
+    address: implmntAddress,
+    constructorArguments: [],
+  });
+
+
+}
+
+async function upgradeNFT() {
+  
+  console.log("Actualizando NFT ...");
+
+  var NFTProxyAdd = "0x24C5B7bb3561aC5E9792C73CE2F204eBFd691ca1";
+  const NFTUpgrade = await hre.ethers.getContractFactory("MiPrimerNft");
+
+  var nftUpgrade = await upgrades.upgradeProxy(NFTProxyAdd, NFTUpgrade);
+  try {
+    await nftUpgrade.deployTransaction.wait(5);
+  } catch (error) {
+    console.log(error);
+  }
+  
+  var implmntAddress = await upgrades.erc1967.getImplementationAddress(nftUpgrade.address);
+
+  console.log("Proxy address NFT:", nftUpgrade.address);
+  console.log("Implementation address NFT:", implmntAddress);
 
   await hre.run("verify:verify", {
     address: implmntAddress,
@@ -313,16 +342,21 @@ async function addLiquidityToPool() {
 }
 
 //deployGoerli()
+//deployMumbai()
+
 //deployUSDC()
 //verifyUSDC()
-//deployPublicSaleSC()
 //deployMyTokenMiPrimerToken()
+//deployPublicSaleSC()
+setupPublicSale()
+
 //upgradePublicSaleSC()
-//deployMumbai()
+//upgradeNFT()
+
 //deployLiquidityPool()
 //addLiquidityToPool()
 //getPair()
-swapTokensForExactTokens()
+//swapTokensForExactTokens()
   .catch((error) => {
     console.error(error);
     process.exitCode = 1;

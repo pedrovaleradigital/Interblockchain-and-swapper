@@ -1,0 +1,24 @@
+{
+  "name": "PC2 PEDRO VALERA NFT  #2",
+  "description": "Fidelity NFT colllection, created as Loyalty Program Solution, with Superpowered NFT and expiration Token",
+  "image": "ipfs://QmTEzgxRy4tQ1UUgWrDFNcmrd6ajQ7BJnznSn1b3PWSQuw/17.png",
+  "edition": 17,
+  "attributes": [
+    {
+      "trait_type": "prize",
+      "value": "clothes iron"
+    },
+    {
+      "trait_type": "style",
+      "value": "abstract pencil and watercolor art"
+    },
+    {
+      "trait_type": "platform",
+      "value": "dall-e-2"
+    },
+    {
+      "trait_type": "magic words",
+      "value": "abstract pencil and watercolor art of an clothes iron in a bedroom"
+    }
+  ]
+}

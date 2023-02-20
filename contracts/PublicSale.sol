@@ -8,25 +8,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-interface IUniSwapV2Router02 {
-    function swapTokensForExactTokens(
-        uint amountOut,
-        uint amountInMax,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-
-    function swapExactTokensForTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-}
-
-contract PublicSalev is
+contract PublicSale is
     Initializable,
     PausableUpgradeable,
     AccessControlUpgradeable,
@@ -53,14 +35,11 @@ contract PublicSalev is
     // Gnosis Safe
     // Crear su setter
     address gnosisSafeWallet;
-    address routerUniSwap;
 
     uint256 tpriceNft;
     event Received(uint256 etherAmount);
     event DeliverNft(address winnerAccount, uint256 nftId);
 
-    // interactuar con uniswap
-    IUniSwapV2Router02 router;
     address usdcAdd;
     address miPrimerTokenAdd;
 
@@ -77,7 +56,6 @@ contract PublicSalev is
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
-        routerUniSwap = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
         nftTotalSold = 0;
         tpriceNft = 0;
     }
@@ -97,10 +75,6 @@ contract PublicSalev is
 
     function getMiPrimerTokenAdd() external view returns (address) {
         return miPrimerTokenAdd;
-    }
-
-    function getRouterUniSwapAdd() external view returns (address) {
-        return routerUniSwap;
     }
 
     function purchaseNftById(uint256 _id) external {
@@ -313,7 +287,9 @@ contract PublicSalev is
 
 /*
 
-Proxy address publicSaleUpgrade: 0x9C463fDd2677E4f1d90bd0e6212bfde94525F43d
-Implementation address publicSaleUpgrade: 0x205D62DABb36eD7b013e416fcb61655ceFd71944
+PublicSale Proxy Address: 0x32B1A98029d8527f76ee0b91F81740d2E0019E0d
+PublicSale Impl Address: 0x9467B67ac523395B0629c14D10eE24Dcb83f75F7
+
+https://goerli.etherscan.io/address/0x32B1A98029d8527f76ee0b91F81740d2E0019E0d
 
 */
