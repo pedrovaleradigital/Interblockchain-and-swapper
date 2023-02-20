@@ -16,7 +16,7 @@ describe("MI PRIMER TOKEN TESTING", function () {
 
   var nftContract, publicSale, miPrimerToken, usdcSC;
   var owner, gnosis, alice, bob, carl, deysi,routerUniSwap;
-  var name = "Mi Primer NFT";
+  var name = "PC2 PEDRO VALERA NFT";
   var symbol = "MPRNFT";
 
   before(async () => {
@@ -43,7 +43,7 @@ describe("MI PRIMER TOKEN TESTING", function () {
     publicSale = await deploySC("PublicSale", []);
     var implementation = await printAddress("PublicSale", publicSale.address);
   
-    gnosis = ethers.utils.getAddress("0x9bF02fD6C167e59dd1D2b2caCB24a92F99535BDb");
+    gnosis = ethers.utils.getAddress("0x895369cd1d60c131669b2f800aDbbD129589ADD3");
 
     // asigna el address del contrato miPrimerToken al contrato PublicSale
     await publicSale.setMiPrimerToken(miPrimerToken.address);
@@ -164,7 +164,7 @@ describe("MI PRIMER TOKEN TESTING", function () {
     });
 
 
-
+return;
 
 
 

@@ -29,8 +29,7 @@ contract PublicSale is
     uint256 constant startDate = 1671580800;
 
     // Maximo price NFT
-    uint256 constant MAX_PRICE_NFT = 50000 * 10 ** 18;
-    uint256 constant MAX_PRICE_NFT_MPTKN = 50000;
+    uint256 constant MAX_PRICE_NFT_MPTKN = 50000 * 10 ** 18;
 
     // Gnosis Safe
     // Crear su setter
@@ -221,7 +220,8 @@ contract PublicSale is
         return random;
     }
 
-    function getPriceNFTById(uint256 _id) external view returns (uint256) {   
+    function getPriceNFTById(uint256 _id) external view returns (uint256) { 
+        require((_id > 0) && (_id <= 30), "NFT: Token id out of range");  
         uint256 priceGroupOne = 500 * 10 ** 18;
         uint256 priceGroupTwo = _id * 1000 * 10 ** 18;
         uint256 priceGroupThree = 10000 * 10 ** 18; // temporalmente
@@ -233,6 +233,7 @@ contract PublicSale is
             uint256 basePriceNft = 10000;
             uint256 hourElapsed = (block.timestamp - startDate) / 3600;
             priceGroupThree = basePriceNft + hourElapsed * 1000;
+            priceGroupThree = priceGroupThree * 10 ** 18;
 
             if (priceGroupThree >= MAX_PRICE_NFT_MPTKN){
                 priceGroupThree = MAX_PRICE_NFT_MPTKN;
@@ -255,6 +256,7 @@ contract PublicSale is
             uint256 basePriceNft = 10000;
             uint256 hourElapsed = (block.timestamp - startDate) / 3600;
             priceGroupThree = basePriceNft + hourElapsed * 1000;
+            priceGroupThree = priceGroupThree * 10 ** 18;
             priceGroupThree = (priceGroupThree < MAX_PRICE_NFT_MPTKN)
                 ? priceGroupThree
                 : MAX_PRICE_NFT_MPTKN;

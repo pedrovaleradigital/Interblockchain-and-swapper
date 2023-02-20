@@ -40,7 +40,7 @@ contract MiPrimerNft is
     }
 
     function _baseURI() internal pure override returns (string memory) {
-        string memory ipfsCID = "QmPDEDNuk4SMhufMxkoCiYgWgoN959FC8X7S9CC4ucdeuk";
+        string memory ipfsCID = "QmYZsLtuKRHv58vNDPYQK1rAgfHe8oUun8bGB3sK1Frt9L";
         return string(abi.encodePacked("ipfs://", ipfsCID, "/"));
     }
 

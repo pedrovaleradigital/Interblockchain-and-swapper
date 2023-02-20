@@ -17,10 +17,10 @@ var usdcTkContract, miPrTokenContract, nftTknContract, pubSContract, myLiquidity
 // Conectar con metamask
 async function initSCsGoerli() {
   console.log("Conectandose a los contratos de Goerli");
-  usdcAdd = "0xE4e5b4F5fA2B52F7E496cF263fE0E8A8C58b857B";
+  usdcAdd = "0x557AA53161e6168C57aBF64ED60Af7BE5fd07676";
  
   miPrTknAdd = "0x6D2304968662A48977Cca0A6b9af72f661d6D6eD";
-  pubSContractAdd = "0x9C463fDd2677E4f1d90bd0e6212bfde94525F43d";
+  pubSContractAdd = "0x32B1A98029d8527f76ee0b91F81740d2E0019E0d";
 
   gnosisWallet = "0x895369cd1d60c131669b2f800aDbbD129589ADD3";
 
@@ -43,7 +43,7 @@ async function initSCsGoerli() {
 // Se pueden escuchar eventos de los contratos usando el provider con RPC
 async function initSCsMumbai() {
   console.log("Conectandose al NFT de Mumbai");
-  var nftAddress = "0x24C5B7bb3561aC5E9792C73CE2F204eBFd691ca1";
+  var nftAddress = "0x774D1dBc46F9040aB9950337Fd6Bd49138cD5EF0";
   var urlProvider = "https://polygon-mumbai.g.alchemy.com/v2/KzQHMiGH0FQwJkdLS5WnrZEVdeOPL2bz";
   var provider = new ethers.providers.JsonRpcProvider(urlProvider);
 
@@ -175,14 +175,14 @@ async function setUpListeners() {
         .getPriceNFTById(value);
       var response = await tx;
       console.log("RESPONSE BIGNUMBER ES:",response);
-      console.log("RESPONSE NUMBER ES:",Number(response));
+      console.log("RESPONSE NUMBER ES:",ethers.utils.formatEther(response));
       //console.log("transactionHash:",response.transactionHash);
 
       var ul = document.getElementById("PriceList");
       var li = document.createElement("li");
       var children = ul.children.length + 1
       li.setAttribute("id", "element" + children)
-      li.appendChild(document.createTextNode("El precio del NFT " + valorCajaTexto + " es: " + Number(response) + " MPRTKN"));
+      li.appendChild(document.createTextNode("El precio del NFT " + valorCajaTexto + " es: " + ethers.utils.formatEther(response) + " MPRTKN"));
       ul.appendChild(li)
 
       return response;
@@ -193,11 +193,42 @@ async function setUpListeners() {
 
   var bttn = document.getElementById("purchaseButtonUSDC");
   bttn.addEventListener("click", async function () {
+
     var gasPrice = await provider.getGasPrice();
     console.log("gasPrice:"+gasPrice);
 
     var valorCajaTexto = document.getElementById("purchaseInput2").value;
     var id = BigNumber.from(`${valorCajaTexto}`);
+
+    // Inicia consulta de saldos:
+    var response2 = await usdcTkContract.connect(signer).balanceOf(account);
+    var response3 = response2/1000000;
+    console.log(response3);
+    
+    var ul = document.getElementById("BalancesUSDC");
+    var li = document.createElement("li");
+    var children = ul.children.length + 1;
+    li.setAttribute("id", "element" + children)
+    li.appendChild(document.createTextNode("<ETAPA1> Saldo inicial:"));
+    ul.appendChild(li)
+
+    var li = document.createElement("li");
+    var children = ul.children.length + 1;
+    li.setAttribute("id", "element" + children)
+    li.appendChild(document.createTextNode("USD Coin Balance: " + response3.toString()));
+    ul.appendChild(li)
+    
+    
+    var response1 = await miPrTokenContract.connect(signer).balanceOf(account);
+    response3 = ethers.utils.formatEther(response1);
+    console.log(response3);
+    
+    var li = document.createElement("li");
+    var children = ul.children.length + 1
+    li.setAttribute("id", "element" + children)
+    li.appendChild(document.createTextNode("Mi Primer Token Balance: " + response3.toString()));
+    ul.appendChild(li)
+    // Termina consulta de saldos:
 
     console.log("id:"+id);
 
@@ -209,17 +240,14 @@ async function setUpListeners() {
     var amountOut2=amountOut/1000000000000000000;
     console.log("amountOut_bits:"+amountOut2);
 
-    var amountsIn = await myLiquidityContract.connect(signer).getAmountsIn(amountOut2,[usdcAdd,miPrTknAdd]);
+    var amountsIn = await myLiquidityContract.connect(signer).getAmountsIn(amountOut,[usdcAdd,miPrTknAdd]);
     
     var valueUSDCoin = amountsIn[0];
     console.log("valueUSDCoin:"+valueUSDCoin); 
-   
-    var value = BigNumber.from(valueUSDCoin+'000000');
-    console.log("priceUSDCoin_bits:"+value);
     
     var tx = await usdcTkContract
       .connect(signer)
-      .approve(pubSContract.address, value);
+      .approve(pubSContract.address, valueUSDCoin);
 
     var response = await tx.wait();
     console.log("Approve: "+response);
@@ -227,10 +255,10 @@ async function setUpListeners() {
 
     var tx = await usdcTkContract
       .connect(signer)
-      .transfer(myLiquidityContract.address,value);
+      .transfer(myLiquidityContract.address,valueUSDCoin);
+    var response = await tx.wait();
 
-
-    var amountInMax = value;
+    var amountInMax = valueUSDCoin;
     var path = [usdcAdd, miPrTknAdd];
     var to = account;
     var deadline = new Date().getTime();
@@ -242,16 +270,76 @@ async function setUpListeners() {
       to,
       deadline,
     );
-    console.log("Respuesta Final response0:"+tx[0]);
-    console.log("Respuesta Final response1:"+tx[1]);
     var response = await tx.wait();
 
 
-    console.log("Respuesta Final response:"+response);
-    console.log("Respuesta Final response0:"+tx[0]);
-    console.log("Respuesta Final response1:"+tx[1]);
-    return response;
+    // Inicia consulta de saldos:
+    var li = document.createElement("li");
+    var children = ul.children.length + 1;
+    li.setAttribute("id", "element" + children)
+    li.appendChild(document.createTextNode("<ETAPA2> Saldo luego del Swap:"));
+    ul.appendChild(li)
 
+    var response2 = await usdcTkContract.connect(signer).balanceOf(account);
+    var response3 = response2/1000000;
+    console.log(response3);
+    
+    var li = document.createElement("li");
+    var children = ul.children.length + 1;
+    li.setAttribute("id", "element" + children)
+    li.appendChild(document.createTextNode("USD Coin Balance: " + response3.toString()));
+    ul.appendChild(li)
+    
+    
+    var response1 = await miPrTokenContract.connect(signer).balanceOf(account);
+    response3 = ethers.utils.formatEther(response1);
+    console.log(response3);
+    
+    var li = document.createElement("li");
+    var children = ul.children.length + 1
+    li.setAttribute("id", "element" + children)
+    li.appendChild(document.createTextNode("Mi Primer Token Balance: " + response3.toString()));
+    ul.appendChild(li)
+    // Termina consulta de saldos
+
+    console.log("Comprando NFT...");
+    var tx = await pubSContract
+      .connect(signer)
+      .purchaseNftById(id);
+    var response = await tx.wait();
+    console.log(response);
+    console.log("transactionHash:",response.transactionHash);
+
+    // Inicia consulta de saldos:
+    var li = document.createElement("li");
+    var children = ul.children.length + 1;
+    li.setAttribute("id", "element" + children)
+    li.appendChild(document.createTextNode("<ETAPA3> Saldo final luego de comprar NFT:"));
+    ul.appendChild(li)
+
+    var response2 = await usdcTkContract.connect(signer).balanceOf(account);
+    var response3 = response2/1000000;
+    console.log(response3);
+    
+    var li = document.createElement("li");
+    var children = ul.children.length + 1;
+    li.setAttribute("id", "element" + children)
+    li.appendChild(document.createTextNode("USD Coin Balance: " + response3.toString()));
+    ul.appendChild(li)
+    
+    
+    var response1 = await miPrTokenContract.connect(signer).balanceOf(account);
+    response3 = ethers.utils.formatEther(response1);
+    console.log(response3);
+    
+    var li = document.createElement("li");
+    var children = ul.children.length + 1
+    li.setAttribute("id", "element" + children)
+    li.appendChild(document.createTextNode("Mi Primer Token Balance: " + response3.toString()));
+    ul.appendChild(li)
+    // Termina consulta de saldos:
+
+    return response;
 
   });
 

@@ -50,7 +50,8 @@ async function setupPublicSale() {
   var urlProvider = process.env.GOERLI_TESNET_URL;
   var provider = new ethers.providers.JsonRpcProvider(urlProvider);
 
-  var publicSaleContract = new hre.ethers.Contract(publicSaleProxyAdd, PublicSaleAbi.abi, provider);
+  var PublicSaleContract = await hre.ethers.getContractFactory("PublicSale");
+  var publicSaleContract = PublicSaleContract.attach(publicSaleProxyAdd);
 
   console.log("Configura el address de MiPrimerToken en Public Sale");
   var tx = await publicSaleContract.connect(owner).setMiPrimerToken(miPrimerTokenAdd);
@@ -63,7 +64,6 @@ async function setupPublicSale() {
   console.log("Configura el address de Gnosis en Public Sale");
   var tx = await publicSaleContract.connect(owner).setGnosisWalletAdd(gnosisSafeWalletAdd);
   await tx.wait();
-
 
 }
 
@@ -110,8 +110,8 @@ async function upgradePublicSaleSC() {
   
   console.log("Actualizando PublicSale ...");
 
-  var PublicSaleProxyAdd = "0x9C463fDd2677E4f1d90bd0e6212bfde94525F43d";
-  const PublicSaleUpgrade = await hre.ethers.getContractFactory("PublicSalev3");
+  var PublicSaleProxyAdd = "0x32B1A98029d8527f76ee0b91F81740d2E0019E0d";
+  const PublicSaleUpgrade = await hre.ethers.getContractFactory("PublicSale");
 
   var publicSaleUpgrade = await upgrades.upgradeProxy(PublicSaleProxyAdd, PublicSaleUpgrade);
   try {
@@ -137,7 +137,7 @@ async function upgradeNFT() {
   
   console.log("Actualizando NFT ...");
 
-  var NFTProxyAdd = "0x24C5B7bb3561aC5E9792C73CE2F204eBFd691ca1";
+  var NFTProxyAdd = "0x774D1dBc46F9040aB9950337Fd6Bd49138cD5EF0";
   const NFTUpgrade = await hre.ethers.getContractFactory("MiPrimerNft");
 
   var nftUpgrade = await upgrades.upgradeProxy(NFTProxyAdd, NFTUpgrade);
@@ -348,10 +348,10 @@ async function addLiquidityToPool() {
 //verifyUSDC()
 //deployMyTokenMiPrimerToken()
 //deployPublicSaleSC()
-setupPublicSale()
+//setupPublicSale()
 
 //upgradePublicSaleSC()
-//upgradeNFT()
+upgradeNFT()
 
 //deployLiquidityPool()
 //addLiquidityToPool()
