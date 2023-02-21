@@ -109,4 +109,6 @@ MiPrimerNft Impl Address: 0x051d694664479A20cFF90C77b45719a5F933a25e
 
 https://mumbai.polygonscan.com/address/0x774D1dBc46F9040aB9950337Fd6Bd49138cD5EF0
 
+https://testnets.opensea.io/es/collection/pc2-pedro-valera-nft
+
 */
