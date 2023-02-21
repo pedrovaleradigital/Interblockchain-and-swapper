@@ -1,75 +1,69 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const { time } = require("@nomicfoundation/hardhat-network-helpers");
+//const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
-const { getRole, deploySC, printAddress, deploySCNoUp, ex, pEth, printAddressNoUp } = require("../utils");
+const { getRole, deploySC, ex, pEth } = require("../utils");
+//const { getRole, deploySC, deploySCNoUp, ex, verify, pEth, printAddress } = require("../utils");
 
 const MINTER_ROLE = getRole("MINTER_ROLE");
-const BURNER_ROLE = getRole("BURNER_ROLE");
+//const BURNER_ROLE = getRole("BURNER_ROLE");
 
 // 21 de diciembre del 2022 GMT
-var startDate = 1671580800;
+//var startDate = 1671580800;
 
-var makeBN = (num) => ethers.BigNumber.from(String(num));
+//var makeBN = (num) => ethers.BigNumber.from(String(num));
+
+
 
 describe("MI PRIMER TOKEN TESTING", function () {
+  var nftContract, publicSaleContract, miPrimerTokenContract, usdc;
+  var owner, gnosis, alice, bob, carl, deysi, relayer;
+  
+  var nftTokenName = "PC2 PEDRO VALERA NFT";
+  var nftTokenSymbol = "MPRNFT";
+  var nftContractName = "MiPrimerNft";
 
-  var nftContract, publicSale, miPrimerToken, usdcSC;
-  var owner, gnosis, alice, bob, carl, deysi,routerUniSwap;
-  var name = "PC2 PEDRO VALERA NFT";
-  var symbol = "MPRNFT";
+  var publicSaleContractName = "PublicSale";
+
+  var miPrimerTokenName = "MyTokenMiPrimerToken";
+  //var miPrimerTokenSymbol = "MPRTKN";
+  var miPrimerTokenContractName = miPrimerTokenName;
 
   before(async () => {
-    [owner, gnosis, alice, bob, carl, deysi] = await ethers.getSigners();
+    [owner, gnosis, alice, bob, carl, deysi,relayer] = await ethers.getSigners();
+    console.log(`Owner:  ${owner.address}`);
+    console.log(`Gnosis: ${gnosis.address}`);
+    console.log(`Alice:  ${alice.address}`);
+    console.log(`Bob:    ${bob.address}`);
+    console.log(`Carl:   ${carl.address}`);
+    console.log(`Deysi:  ${deysi.address}`);
   });
-
 
   // Estos dos métodos a continuación publican los contratos en cada red
   // Se usan en distintos tests de manera independiente
   // Ver ejemplo de como instanciar los contratos en deploy.js
+
   async function deployNftSC() {
-
-    console.log("Desplegando Nft ....");
-    nftContract = await deploySC("MiPrimerNft", []);
-    var implementation = await printAddress("MiPrimerNft", nftContract.address);
-
+    relayerAddress = relayer.address;
+    nftContract = await deploySC(nftContractName);
+    var implementation = await upgrades.erc1967.getImplementationAddress(nftContract.address);
+    await ex(nftContract, "grantRole", [MINTER_ROLE, relayerAddress], "Error in Grant Role");
+    //await verify(implementation, nftContractName, []);
+    //await printAddress(nftContractName,nftContract.address);
   }
 
+  async function deployMyTokenMiPrimerToken() {
+    miPrimerTokenContract = await deploySC(miPrimerTokenContractName, []);
+    var implementation = await upgrades.erc1967.getImplementationAddress(miPrimerTokenContract.address);
+    //await verify(implementation, miPrimerTokenContractName, []);
+    //await printAddress(miPrimerTokenContractName,miPrimerTokenContract.address);
+  }
 
   async function deployPublicSaleSC() {
-
-    console.log("Desplegando PublicSale ...");
-   
-    publicSale = await deploySC("PublicSale", []);
-    var implementation = await printAddress("PublicSale", publicSale.address);
-  
-    gnosis = ethers.utils.getAddress("0x895369cd1d60c131669b2f800aDbbD129589ADD3");
-
-    // asigna el address del contrato miPrimerToken al contrato PublicSale
-    await publicSale.setMiPrimerToken(miPrimerToken.address);
-
-    await publicSale.setUSDCCoin(usdcSC.address);
-
-    // asigna el address del vaul en gnosis al contrato PublicSale
-    await publicSale.setGnosisWalletAdd(gnosis);
-  
-  }
-
-
-  async function deployMPTKN() {
-    console.log("Desplegando MPTKN ...");
-    miPrimerToken = await deploySC("MyTokenMiPrimerToken", []);
-    var implementation = await printAddress("MyTokenMiPrimerToken", miPrimerToken.address);
-
-  }
-
-  // USDCoin
-  async function deployUSDC() {
-
-    console.log("Desplegando USDCoin ...");
-    usdcSC = await deploySCNoUp("USDCoin", []);
-    await printAddressNoUp("USDCoin", usdcSC.address);
-
+    publicSaleContract = await deploySC(publicSaleContractName, []);
+    var implementation = await upgrades.erc1967.getImplementationAddress(publicSaleContract.address);
+    //await verify(implementation, publicSaleContractName, []);
+    //await printAddress(publicSaleContractName,publicSaleContract.address);
   }
 
   describe("Mi Primer Nft Smart Contract", () => {
@@ -79,575 +73,275 @@ describe("MI PRIMER TOKEN TESTING", function () {
     });
 
     it("Verifica nombre colección", async () => {
-
-      expect(await nftContract.name()).to.be.equal(name);
-
+      var tokenName = await nftContract.name();
+      expect(tokenName).to.be.equal(nftTokenName);
     });
 
+
     it("Verifica símbolo de colección", async () => {
-
-      expect(await nftContract.symbol()).to.be.equal(symbol);
-
+      var tokenSymbol = await nftContract.symbol();
+      //console.log(tokenSymbol, "vs",nftTokenSymbol);
+      expect(tokenSymbol).to.be.equal(nftTokenSymbol);
     });
 
     it("No permite acuñar sin privilegio", async () => {
-      var id = 1;
-      const safeMint = nftContract.connect(alice).functions["safeMint(address,uint256)"];
       await expect(
-        safeMint(alice.address, id)
-      ).to.revertedWith(
-        `AccessControl: account ${alice.address.toLowerCase()} is missing role ${MINTER_ROLE}`
-      );
-
+        nftContract.connect(alice).safeMint(bob.address,1)
+      ).to.be.reverted;
+      await nftContract.connect(relayer).safeMint(bob.address,1);
     });
 
     it("No permite acuñar doble id de Nft", async () => {
-
-      var id = 1;
-
-      // se asigna permiso para mintear
-      await nftContract.grantRole(MINTER_ROLE, alice.address);
-
-      // hace el minteado
-      const safeMint = nftContract.connect(owner).functions["safeMint(address,uint256)"];
-      await expect(safeMint(bob.address, id))
-        .to.changeTokenBalance(nftContract, bob.address, 1);
-
-      // se intenta mintear/acuñar el mismo id nft por segunda vez   
-      await expect(safeMint(alice.address, id))
-        .to.revertedWith("ERC721: token already minted");
-
+      await nftContract.connect(relayer).safeMint(alice.address,1);
+      await expect(
+        nftContract.connect(relayer).safeMint(bob.address,1)
+      ).to.be.revertedWith("ERC721: token already minted");
     });
 
     it("Verifica rango de Nft: [1, 30]", async () => {
       // Mensaje error: "NFT: Token id out of range"
-
-      var id = 31;
-
-      // hace el minteado
-      const safeMint = nftContract.connect(owner).functions["safeMint(address,uint256)"];
-
-      // se intenta mintear/acuñar el mismo id nft por segunda vez   
-      await expect(safeMint(alice.address, id))
-        .to.revertedWith("NFT: Token id out of range");
-
+      await expect(
+        nftContract.connect(relayer).safeMint(alice.address,0)
+      ).to.be.revertedWith("NFT: Token id out of range");
+      await nftContract.connect(relayer).safeMint(bob.address,1);
+      await nftContract.connect(relayer).safeMint(carl.address,30);
+      await expect(
+        nftContract.connect(relayer).safeMint(deysi.address,31)
+      ).to.be.revertedWith("NFT: Token id out of range");
 
     });
 
     it("Se pueden acuñar todos (30) los Nfts", async () => {
-
-      const LIMIT = 30;
-      let COUNTER = 1;
-      const safeMint = nftContract.connect(owner).functions["safeMint(address,uint256)"];
-      var addressZero = "0x0000000000000000000000000000000000000000";
-
-      async function mintNft(nftid) {
-
-        var tx = await safeMint(bob.address, nftid);
-        return tx;
+      for (var i=1;i<=30;i++){
+        await nftContract.connect(relayer).safeMint(alice.address,i);
       }
-
-      async function batchMintNft() {
-        if (COUNTER > LIMIT) return;
-        var tx = await mintNft(COUNTER);
-
-        await expect(tx)
-          .to.emit(nftContract, "Transfer")
-          .withArgs(addressZero, bob.address, COUNTER);
-
-        COUNTER++;
-        await batchMintNft();
-      }
-      await batchMintNft();
-
-      await expect(mintNft(COUNTER)).to.revertedWith("NFT: Token id out of range");
-    });
-
-
-return;
-
-
-
-describe("Public Sale Smart Contract empieza", () => {
-  // Se publica el contrato antes de cada test
-  beforeEach(async () => {
-    await deployUSDC();
-    await deployMPTKN();
-    await deployPublicSaleSC();
-  });
-
-  it("No se puede comprar otra vez el mismo ID", async () => {
-   
-  const id = 4;
-  // usuario tiene suficiente credito para comprar
-  // acuñar tokens a favor de alice 
-  await miPrimerToken.mint(
-    alice.address,
-    ethers.utils.parseEther("1500")
-  );
-  // usuario dio permisos a PublicSale pero no tiene fondos 
-  const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-  await approvePublicSale(publicSale.address, 1500);
-  const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-  var tx = await purchaseNftById(id);
-  await expect(tx)
-    .to.emit(publicSale, "DeliverNft")
-    .withArgs(alice.address, id);
-  await expect(purchaseNftById(id))
-    .to.revertedWith('Public Sale: id not available');
-});
-
-it("IDs aceptables: [1, 30]", async () => {
-  // id fuera de  rango
-  var id = 32;
-  // usuario tiene suficiente credito para comprar
-  // acuñar tokens a favor de alice 
-  await miPrimerToken.mint(
-    alice.address,
-    ethers.utils.parseEther("100000")
-  );
-  // usuario dio permisos a PublicSale pero no tiene fondos 
-  const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-  await approvePublicSale(publicSale.address, 10);
-  await publicSale.setMiPrimerToken(miPrimerToken.address);
-  const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-  await expect(
-    purchaseNftById(id)
-  ).to.revertedWith("NFT: Token id out of range");
-});
-it("Usuario no dio permiso de MiPrimerToken a Public Sale", async () => {
-  var id = 1;
-  await publicSale.setMiPrimerToken(miPrimerToken.address);
-  const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-  await expect(
-    purchaseNftById(id)
-  ).to.revertedWith("Public Sale: Not enough allowance");
-});
-it("Usuario no tiene suficientes MiPrimerToken para comprar", async () => {
-  var id = 2;
-  // usuario dio permisos a PublicSale pero no tiene fondos 
-  const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-  await approvePublicSale(publicSale.address, 10);
-  await publicSale.setMiPrimerToken(miPrimerToken.address);
-  const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-  await expect(
-    purchaseNftById(id)
-  ).to.revertedWith("Public Sale: Not enough token balance");
-});
-describe("Compra grupo 1 de NFT: 1 - 10", () => {
-  it("Emite evento luego de comprar", async () => {
-    // modelo para validar si evento se disparo con correctos argumentos
-    
-    var id = 1;
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther("500")
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, 500);
-
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.emit(publicSale, "DeliverNft")
-      .withArgs(alice.address, id);
-  });
-  it("Transfiere todos los tokens miPrimerToken a la cuenta de Owner Public Sale", async () => {
-   
-    var id = 1;
-    // usuarios tiene suficiente credito para comprar/acuñar tokens
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther("500")
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    var approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, 500);
-    var purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.emit(publicSale, "DeliverNft")
-      .withArgs(alice.address, id);
-    // transfiere todos los miprimertoken del contrato al owner
-    var transferTokensFromSmartContract = publicSale.connect(owner).functions["transferTokensFromSmartContract()"];
-    var tx = await transferTokensFromSmartContract();
-    await expect(tx)
-      .to.changeTokenBalance(miPrimerToken, owner.address, 450);
-  });
-  it("Disminuye balance de MiPrimerToken luego de compra", async () => {
-    // Usar changeTokenBalance
-    // source: https://ethereum-waffle.readthedocs.io/en/latest/matchers.html#change-token-balance
-   
-    var id = 1;
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther("500")
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, 500);
-   
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.changeTokenBalance(miPrimerToken, alice.address, -500);
-  });
-  it("Gnosis safe recibe comisión del 10% luego de compra", async () => {
-   
-    var id = 1;
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther("500")
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, 500);
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.changeTokenBalance(miPrimerToken, gnosis, 50);
-
-
-
-
-
-
-      const approvePublicSale2 = miPrimerToken.connect(alice).functions["balanceOf(address)"];
-      var tx = await approvePublicSale2(publicSale.address);
-      console.log("////////////////////");
-      console.log("////////////////////");
-      console.log("////////////////////");
-      console.log("Comision gnosis safe uint256:",tx);
-      console.log("////////////////////");
-      console.log("////////////////////");
-      console.log("////////////////////");
-    
-      //console.log("Comision gnosis safe uint256:");
-
-
-
-
-
-
-
-
-
-
-  });
-  it("Smart contract recibe neto (90%) luego de compra", async () => {
-    // Usar changeTokenBalance
-    // source: https://ethereum-waffle.readthedocs.io/en/latest/matchers.html#change-token-balance
-   
-    var id = 1;
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther("500")
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, 500);
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.changeTokenBalance(miPrimerToken, publicSale.address, 450);
-  });
-});
-describe("Compra grupo 2 de NFT: 11 - 20", () => {
-  it("Emite evento luego de comprar", async () => {
-    var id = 14;
-    var costo = id * 1000;
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther(costo.toString())
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, costo);
-    
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.emit(publicSale, "DeliverNft")
-      .withArgs(alice.address, id);
-  });
-  it("Disminuye balance de MiPrimerToken luego de compra", async () => {
- 
-    var id = 15;
-    var costo = id * 1000;
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther(costo.toString())
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, costo);
-   
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.changeTokenBalance(miPrimerToken, alice.address, -costo);
-  });
-  it("Gnosis safe recibe comisión del 10% luego de compra", async () => {
-    var id = 13;
-    var priceNft = id * 1000;
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther(priceNft.toString())
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, priceNft);
-    var _fee = (priceNft * 10) / 100;
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.changeTokenBalance(miPrimerToken, gnosis, _fee);
-  });
-  it("Smart contract recibe neto (90%) luego de compra", async () => {
-   
-    var id = 12;
-    var priceNft = id * 1000;
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther(priceNft.toString())
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, priceNft);
-   
-    var _fee = (priceNft * 10) / 100;
-    var _net = priceNft - _fee;
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.changeTokenBalance(miPrimerToken, publicSale.address, _net);
-  });
-});
-describe("Compra grupo 3 de NFT: 21 - 30", () => {
-  it("Disminuye balance de MiPrimerToken luego de compra", async () => {
-   
-    var id = 22;
-    var basePriceNft = 10000;
-    var nowDate = Math.floor(new Date().getTime() / 1000.0)
-    var hourElapsed = Math.floor((nowDate - startDate) / 3600);
-    var priceNft = basePriceNft + hourElapsed * 1000;
-    if (priceNft > 50000) {
-      priceNft = 50000;
-    }
-    console.log("priceNft: ", priceNft);
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther(priceNft.toString())
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, priceNft);
-   
-    var _fee = (priceNft * 10) / 100;
-    var _net = priceNft - _fee;
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.changeTokenBalance(miPrimerToken, publicSale.address, _net);
-  });
-  it("Gnosis safe recibe comisión del 10% luego de compra", async () => {
-   
-    var id = 25;
-    var basePriceNft = 10000;
-    var nowDate = Math.floor(new Date().getTime() / 1000.0)
-    var hourElapsed = Math.floor((nowDate - startDate) / 3600);
-    var priceNft = basePriceNft + hourElapsed * 1000;
-    if (priceNft > 50000) {
-      priceNft = 50000;
-    }
-    console.log("priceNft: ", priceNft);
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther(priceNft.toString())
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, priceNft);
-
-    var _fee = (priceNft * 10) / 100;
-    var _net = priceNft - _fee;
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.changeTokenBalance(miPrimerToken, gnosis, _fee);
-  });
-  it("Smart contract recibe neto (90%) luego de compra", async () => {
-   
-    var id = 28;
-    var basePriceNft = 10000;
-    var nowDate = Math.floor(new Date().getTime() / 1000.0)
-    var hourElapsed = Math.floor((nowDate - startDate) / 3600);
-    var priceNft = basePriceNft + hourElapsed * 1000;
-    if (priceNft > 50000) {
-      priceNft = 50000;
-    }
-    console.log("priceNft: ", priceNft);
-    // usuario tiene suficiente credito para comprar
-    // acuñar tokens a favor de alice 
-    await miPrimerToken.mint(
-      alice.address,
-      ethers.utils.parseEther(priceNft.toString())
-    );
-    // usuario dio permisos a PublicSale pero no tiene fondos 
-    const approvePublicSale = miPrimerToken.connect(alice).functions["approve(address,uint256)"];
-    await approvePublicSale(publicSale.address, priceNft);
-    
-    var _fee = (priceNft * 10) / 100;
-    var _net = priceNft - _fee;
-    const purchaseNftById = publicSale.connect(alice).functions["purchaseNftById(uint256)"];
-    var tx = await purchaseNftById(id);
-    await expect(tx)
-      .to.changeTokenBalance(miPrimerToken, publicSale.address, _net);
-  });
-});
-describe("Depositando Ether para Random NFT", () => {
-  it("Método emite evento (30 veces) ", async () => {
-    const LIMIT = 30;
-    let COUNTER = 1;
-    async function compraRandomNft() {
-      
-      // Ether Amount to send to Public Sale SC 
-      const ethAmount = "0.01";
-      const weiAmount = ethers.utils.parseEther(ethAmount);
-      const transaction = {
-        value: weiAmount,
-      };
-      // Deposita el ether y llama al metodo
-      var tx = await publicSale.depositEthForARandomNft(transaction);
-      const receipt = await tx.wait()
-      for (const event of receipt.events) {
-        console.log(`Event ${event.event} with args ${event.args}`);
-      }
-    }
-    async function seguirComprandoNft() {
-      if (COUNTER > LIMIT) return;
-      COUNTER++;
-      await compraRandomNft();
-      await seguirComprandoNft();
-    }
-    await seguirComprandoNft();
-  });
-  it("Método falla la vez 31", async () => {
-    const LIMIT = 30;
-    let COUNTER = 1;
-    async function compraRandomNft() {
-   
-      // Ether Amount to send to Public Sale SC 
-      const ethAmount = "0.01";
-      const weiAmount = ethers.utils.parseEther(ethAmount);
-      const transaction = {
-        value: weiAmount,
-      };
-      // Deposita el ether y llama al metodo
-      var tx = await publicSale.depositEthForARandomNft(transaction);
-      const receipt = await tx.wait()
-      for (const event of receipt.events) {
-        console.log(`Event ${event.event} with args ${event.args}`);
-      }
-    }
-    async function seguirComprandoNft() {
-      if (COUNTER > LIMIT) return;
-      COUNTER++;
-      await compraRandomNft();
-      await seguirComprandoNft();
-    }
-    await seguirComprandoNft();
-    // vez número 31 arroja error
-    await expect(compraRandomNft()).to.revertedWith(
-      "No hay nfts disponibles"
-    );
-  });
-  it("Envío de Ether y emite Evento (30 veces)", async () => {
-    const LIMIT = 30;
-    let COUNTER = 1;
-    async function compraRandomNft() {
-      
-      await expect(
-        await owner.sendTransaction({
-          to: publicSale.address,
-          value: pEth("0.01"),
-        })
-      ).to.changeEtherBalances(
-        [owner.address, gnosis],
-        [pEth("-0.01"), pEth("0.01")]
-      );
-    }
-    async function seguirComprandoNft() {
-      if (COUNTER > LIMIT) return;
-      COUNTER++;
-      await compraRandomNft();
-      await seguirComprandoNft();
-    }
-    await seguirComprandoNft();
-  });
-  it("Envío de Ether falla la vez 31", async () => {
-    const LIMIT = 30;
-    let COUNTER = 1;
-    async function compraRandomNft() {
-      await expect(
-        await owner.sendTransaction({
-          to: publicSale.address,
-          value: pEth("0.01"),
-        })
-      ).to.changeEtherBalances(
-        [owner.address, gnosis],
-        [pEth("-0.01"), pEth("0.01")]
-      );
-    }
-    async function seguirComprandoNft() {
-      if (COUNTER > LIMIT) return;
-      COUNTER++;
-      await compraRandomNft();
-      await seguirComprandoNft();
-    }
-    await seguirComprandoNft();
-    // vez número 31 arroja error
-    await expect(compraRandomNft()).to.revertedWith(
-      "No hay nfts disponibles"
-    );
-  });
-  it("Da vuelto cuando gnosis recibe Ether", async () => {
-    // Usar el método changeEtherBalances
-    // Source: https://ethereum-waffle.readthedocs.io/en/latest/matchers.html#change-ether-balance-multiple-accounts
-    // Ejemplo:
-    //gasPrice: 50000,
-    await expect(
-      await owner.sendTransaction({
-        to: publicSale.address,
-        value: pEth("0.02")            
-      })
-    ).to.changeEtherBalances(
-      [owner.address, gnosis],
-      [pEth("-0.01"), pEth("0.01")]
-      );
     });
   });
+
+  describe("Public Sale Smart Contract", () => {
+    // Se publica el contrato antes de cada test
+    beforeEach(async () => {
+      await deployMyTokenMiPrimerToken();
+      await deployPublicSaleSC();
+      await publicSaleContract.setMiPrimerToken(miPrimerTokenContract.address);
+      await publicSaleContract.setGnosisWalletAdd(gnosis.address);
+    });
+
+    it("No se puede comprar otra vez el mismo ID", async () => {
+      await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('1000',18));
+      await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('1000',18));
+      await publicSaleContract.connect(alice).purchaseNftById(1);
+      await expect(
+        publicSaleContract.connect(alice).purchaseNftById(1)
+      ).to.be.revertedWith("Public Sale: id not available");
+    });
+
+    it("IDs aceptables: [1, 30]", async () => {
+      await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('660000',18));
+      await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('660000',18));
+      for (i=1;i<31;i++){
+        await publicSaleContract.connect(alice).purchaseNftById(i);
+      }
+    });
+
+    it("Usuario no dio permiso de MiPrimerToken a Public Sale", async () => {
+      await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('500',18));
+      await expect(
+        publicSaleContract.connect(alice).purchaseNftById(1)
+      ).to.be.revertedWith("Public Sale: Not enough allowance");
+    });
+
+    it("Usuario no tiene suficientes MiPrimerToken para comprar", async () => {
+      await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('11499',18));
+      await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('11500',18));
+      await publicSaleContract.connect(alice).purchaseNftById(1);
+      await expect(
+        publicSaleContract.connect(alice).purchaseNftById(11)
+      ).to.be.revertedWith("Public Sale: Not enough token balance");
+    });
+
+    describe("Compra grupo 1 de NFT: 1 - 10", () => {
+      it("Emite evento luego de comprar", async () => {
+        // modelo para validar si evento se disparo con correctos argumentos
+        await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('5000',18));
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('5000',18));
+        var tx;
+        for (var i=1;i<=10;i++)
+        {
+          tx=await publicSaleContract.connect(alice).purchaseNftById(i);
+          await expect(tx)
+          .to.emit(publicSaleContract, "DeliverNft")
+          .withArgs(alice.address, i);
+        }
+      });
+
+      it("Disminuye balance de MiPrimerToken luego de compra", async () => {
+        // Usar changeTokenBalance
+        // source: https://ethereum-waffle.readthedocs.io/en/latest/matchers.html#change-token-balance
+        await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('500',18));
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('500',18));
+        await expect(
+          publicSaleContract.connect(alice).purchaseNftById(5)
+        ).to.changeTokenBalance(miPrimerTokenContract,alice.address,ethers.utils.parseEther('-500',18));
+      });
+
+      it("Gnosis safe recibe comisión del 10% luego de compra", async () => {
+        await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('500',18));
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('500',18));
+        await expect(
+          publicSaleContract.connect(alice).purchaseNftById(1)
+        ).to.changeTokenBalance(miPrimerTokenContract,gnosis.address,ethers.utils.parseEther('50',18));
+      });
+
+      it("Smart contract recibe neto (90%) luego de compra", async () => {
+        await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('500',18));
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('500',18));
+        await expect(
+          publicSaleContract.connect(alice).purchaseNftById(1)
+        ).to.changeTokenBalance(miPrimerTokenContract,publicSaleContract.address,ethers.utils.parseEther('450',18));
+      });
+    });
+
+    describe("Compra grupo 2 de NFT: 11 - 20", () => {
+      it("Emite evento luego de comprar", async () => {
+        await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('155000',18));
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('155000',18));
+        var tx;
+        for (var i=11;i<=20;i++)
+        {
+          tx=await publicSaleContract.connect(alice).purchaseNftById(i);
+          await expect(tx)
+          .to.emit(publicSaleContract, "DeliverNft")
+          .withArgs(alice.address, i);
+        }        
+      });
+
+      it("Disminuye balance de MiPrimerToken luego de compra", async () => {
+        await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('15000',18));
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('15000',18));
+        await expect(
+          publicSaleContract.connect(alice).purchaseNftById(15)
+        ).to.changeTokenBalance(miPrimerTokenContract,alice.address,ethers.utils.parseEther('-15000',18));
+      });
+
+      it("Gnosis safe recibe comisión del 10% luego de compra", async () => {
+        await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('15000',18));
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('15000',18));
+        await expect(
+          publicSaleContract.connect(alice).purchaseNftById(15)
+        ).to.changeTokenBalance(miPrimerTokenContract,gnosis.address,ethers.utils.parseEther('1500',18));
+
+      });
+
+      it("Smart contract recibe neto (90%) luego de compra", async () => {
+        await miPrimerTokenContract.mint(alice.address,ethers.utils.parseEther('15000',18));
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,ethers.utils.parseEther('15000',18));
+        await expect(
+          publicSaleContract.connect(alice).purchaseNftById(15)
+        ).to.changeTokenBalance(miPrimerTokenContract,publicSaleContract.address,ethers.utils.parseEther('13500',18));
+      });
+    });
+
+    describe("Compra grupo 3 de NFT: 21 - 30", () => {
+      it("Disminuye balance de MiPrimerToken luego de compra", async () => {
+        var tokenPrice = await publicSaleContract.getPriceNFTById(25);
+        await miPrimerTokenContract.mint(alice.address,tokenPrice);
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,tokenPrice);
+        await expect(
+          publicSaleContract.connect(alice).purchaseNftById(25)
+        ).to.changeTokenBalance(miPrimerTokenContract,alice.address,tokenPrice.mul(-1));
+      });
+
+      it("Gnosis safe recibe comisión del 10% luego de compra", async () => {
+        var tokenPrice = await publicSaleContract.getPriceNFTById(25);
+        var gnosisCommission = tokenPrice.div(10);
+        await miPrimerTokenContract.mint(alice.address,tokenPrice);
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,tokenPrice);
+        await expect(
+          publicSaleContract.connect(alice).purchaseNftById(25)
+        ).to.changeTokenBalance(miPrimerTokenContract,gnosis.address,gnosisCommission);
+      });
+
+      it("Smart contract recibe neto (90%) luego de compra", async () => {
+        var tokenPrice = await publicSaleContract.getPriceNFTById(25);
+        var gnosisCommission = tokenPrice.div(10);
+        var publicSaleCommission = tokenPrice.sub(gnosisCommission);
+        await miPrimerTokenContract.mint(alice.address,tokenPrice);
+        await miPrimerTokenContract.connect(alice).approve(publicSaleContract.address,tokenPrice);
+        await expect(
+          publicSaleContract.connect(alice).purchaseNftById(25)
+        ).to.changeTokenBalance(miPrimerTokenContract,publicSaleContract.address,publicSaleCommission);
+      });
+    });
+    
+
+    describe("Depositando Ether para Random NFT", () => {
+
+      it("Método emite evento (30 veces) ", async () => {
+        for(i=1;i<=30;i++){
+          await expect(
+            publicSaleContract.connect(alice).depositEthForARandomNft({
+              value: pEth("0.01"),
+            }))
+          .to.emit(publicSaleContract,"DeliverNft");
+        }
+      });
+
+      it("Método falla la vez 31", async () => {
+        for(i=1;i<=30;i++){
+          await expect(
+            publicSaleContract.connect(alice).depositEthForARandomNft({
+              value: pEth("0.01"),
+            }))
+          .to.emit(publicSaleContract,"DeliverNft");
+        }
+        await expect(
+          publicSaleContract.connect(alice).depositEthForARandomNft({
+            value: pEth("0.01"),
+          }))
+        .to.be.rejectedWith("No hay nfts disponibles");
+    });
+
+      it("Envío de Ether y emite Evento (30 veces)", async () => {
+        for(i=1;i<=30;i++){
+          await expect(
+            alice.sendTransaction({
+              to:publicSaleContract.address,
+              value: pEth("0.01"),
+            }))
+          .to.emit(publicSaleContract,"DeliverNft");
+        }
+      });
+
+      it("Envío de Ether falla la vez 31", async () => {
+        for(i=1;i<=30;i++){
+          await alice.sendTransaction({
+            to: publicSaleContract.address,
+            value: pEth("0.01"),
+          })
+        }
+        await expect(
+          alice.sendTransaction({
+            to: publicSaleContract.address,
+            value: pEth("0.01"),
+          })
+        ).to.be.revertedWith("No hay nfts disponibles");
+      });
+
+      it("Da vuelto cuando y gnosis recibe Ether", async () => {
+        // Usar el método changeEtherBalances
+        // Source: https://ethereum-waffle.readthedocs.io/en/latest/matchers.html#change-ether-balance-multiple-accounts
+        // Ejemplo:
+        await expect(
+           await owner.sendTransaction({
+             to: publicSaleContract.address,
+             value: pEth("0.02")
+           })
+         ).to.changeEtherBalances(
+           [owner.address, gnosis.address],
+           [pEth("-0.01"), pEth("0.01")]
+         );
+      });
+    });
   });
-});
 });
